@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sys/wait.h>
+#include <string.h>
 
 /**
  * purpose: run a program passing it arguments
@@ -21,13 +22,20 @@ int execute(char *argv[]) {
     return 0;
   if ((pid = fork()) == -1) {
     perror("fork");
-  } else if (pid == 0) {
+  } else if (pid == 0) {  // child process
     signal(SIGINT, SIG_DFL);
-    signal(SIGINT, SIG_DFL);
-    execvp(argv[0], argv);
-    perror("cannot execute command");
-    exit(1);
-  } else {
+    signal(SIGQUIT, SIG_DFL);
+    if (strcmp(argv[0], "cd") == 0) {
+      if (argv[1] == NULL || chdir(argv[1]) == -1) {
+        perror("cd");
+      }
+    } else {
+      execvp(argv[0], argv);
+      perror("cannot execute command");
+      exit(1);
+    }
+
+  } else {  // parent process
     if (wait(&child_info) == -1) {
       perror("wait");
     }
